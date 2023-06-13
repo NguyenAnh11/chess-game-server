@@ -108,7 +108,7 @@ const roomHandler = (socket) => {
     }
 
     rooms[code].status = "Draw"
-    socket.in(code).emit(ROOM_SOCKET_EVENTS.GAME_DRAW)
+    socket.in(code).emit(ROOM_SOCKET_EVENTS.GAME_DRAW);
   } 
 
   socket.on(ROOM_SOCKET_EVENTS.CREATE_GAME, createRoom)
