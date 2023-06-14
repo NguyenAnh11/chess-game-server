@@ -20,7 +20,9 @@ const ROOM_SOCKET_EVENTS = {
   SHOW_ACCEPT_REJECT_GAME_DRAW: "SHOW_ACCEPT_REJECT_GAME_DRAW",
   ACCEPT_OR_REJECT_GAME_DRAW: "ACCEPT_OR_REJECT_GAME_DRAW",
   REJECT_GAME_DRAW: "REJECT_GAME_DRAW",
-  GAME_DRAW: "GAME_DRAW"
+  GAME_DRAW: "GAME_DRAW",
+  RESIGN: "RESIGN",
+  OPPONENT_RESIGN: "OPPONENT_RESIGN"
 }
 
 const roomHandler = (socket) => {
@@ -37,7 +39,7 @@ const roomHandler = (socket) => {
   }
 
   const joinGame = ({ code, user }) => {
-    if (!rooms[code] || ["End", "Draw"].includes(rooms[code].status)) {
+    if (!rooms[code] || ["Game Over", "Draw"].includes(rooms[code].status)) {
       socket.emit(ROOM_SOCKET_EVENTS.RES_JOIN_GAME, {
         success: false,
         error: "Room doesn't exist",
@@ -111,6 +113,20 @@ const roomHandler = (socket) => {
     socket.in(code).emit(ROOM_SOCKET_EVENTS.GAME_DRAW);
   } 
 
+  const resign = ({ code, userId }) => {
+    rooms[code] = {
+      ...rooms[code],
+      status: "Game Over",
+      members: rooms[code].members
+        .reduce((prev, curr) => {
+          if (curr.id === userId) curr.isLoser = true
+          return [...prev, curr]
+        }, [])
+    }
+
+    socket.to(code).emit(ROOM_SOCKET_EVENTS.OPPONENT_RESIGN, rooms[code])
+  }
+
   socket.on(ROOM_SOCKET_EVENTS.CREATE_GAME, createRoom)
   socket.on(ROOM_SOCKET_EVENTS.REQ_JOIN_GAME, joinGame)
   socket.on(ROOM_SOCKET_EVENTS.GET_GAME_INFO, getGameInfo)
@@ -118,6 +134,7 @@ const roomHandler = (socket) => {
   socket.on(ROOM_SOCKET_EVENTS.SEND_MESSAGE, receiveMessage)
   socket.on(ROOM_SOCKET_EVENTS.REQ_GAME_DRAW, receiveRequestGameDraw)
   socket.on(ROOM_SOCKET_EVENTS.ACCEPT_OR_REJECT_GAME_DRAW, receiveAcceptOrRejectGameDraw);
+  socket.on(ROOM_SOCKET_EVENTS.RESIGN, resign);
 }
 
 exports.room = roomHandler
