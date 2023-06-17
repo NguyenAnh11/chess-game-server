@@ -15,11 +15,7 @@ const io = new Server(server, {
 })
 
 io.on('connection', (socket) => {
-    console.log('Connected')
     room(socket)
-    socket.on('diconected', () => {
-        console.log('Disconnected')
-    })
 })
 
 server.listen(process.env.PORT, () => {
